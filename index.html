@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Partner reports — yhangry</title>
+<style>
+  :root{
+    --ink:#14171c;
+    --ink-2:#525a66;
+    --ink-3:#8b94a1;
+    --rule:#dfe3e8;
+    --paper:#f7f8f9;
+    --card:#ffffff;
+    --accent:#0f6b6b;
+    --accent-soft:#e3f0ef;
+    --warn:#8a4b1d;
+    --warn-soft:#fbeee2;
+    --bad:#8f2d2d;
+    --bad-soft:#fbe9e9;
+    --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+    --sans:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;background:var(--paper);color:var(--ink);
+    font-family:var(--sans);font-size:14px;line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+  }
+  a{color:var(--accent)}
+
+  /* ---------- gate ---------- */
+  #gate{
+    position:fixed;inset:0;background:var(--paper);z-index:100;
+    display:flex;align-items:center;justify-content:center;padding:24px;
+  }
+  #gate .box{width:100%;max-width:420px}
+  #gate h1{font-size:19px;margin:0 0 4px;letter-spacing:-.01em}
+  #gate p{color:var(--ink-2);margin:0 0 20px;font-size:13px}
+  label{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.08em;
+    color:var(--ink-3);margin:14px 0 5px;font-weight:600}
+  input,select{
+    width:100%;padding:9px 11px;border:1px solid var(--rule);border-radius:5px;
+    font-family:var(--sans);font-size:14px;background:var(--card);color:var(--ink);
+  }
+  input:focus,select:focus{outline:2px solid var(--accent);outline-offset:-1px;border-color:transparent}
+  button{
+    font-family:var(--sans);font-size:13px;font-weight:600;cursor:pointer;
+    padding:9px 15px;border-radius:5px;border:1px solid var(--rule);
+    background:var(--card);color:var(--ink);
+  }
+  button:hover{border-color:var(--ink-3)}
+  button.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+  button.primary:hover{filter:brightness(1.1)}
+  #gate button{width:100%;margin-top:18px;padding:11px}
+  .err{color:var(--bad);font-size:13px;margin-top:12px;min-height:18px}
+
+  /* ---------- shell ---------- */
+  .wrap{max-width:1180px;margin:0 auto;padding:20px 24px 80px}
+
+  header.top{
+    display:flex;gap:14px;align-items:flex-end;flex-wrap:wrap;
+    padding-bottom:16px;border-bottom:1px solid var(--rule);margin-bottom:22px;
+  }
+  header.top .grow{flex:1;min-width:240px}
+  .brand{font-size:11px;text-transform:uppercase;letter-spacing:.1em;
+    color:var(--ink-3);font-weight:700;margin-bottom:8px}
+
+  .layout{display:grid;grid-template-columns:184px 1fr;gap:32px;align-items:start}
+  @media(max-width:860px){.layout{grid-template-columns:1fr}}
+
+  aside{position:sticky;top:20px}
+  aside h3{font-size:11px;text-transform:uppercase;letter-spacing:.08em;
+    color:var(--ink-3);margin:0 0 10px}
+  .chk{display:flex;align-items:center;gap:8px;padding:4px 0;font-size:13px;color:var(--ink-2);cursor:pointer}
+  .chk input{width:auto;padding:0}
+
+  /* ---------- report ---------- */
+  section{
+    background:var(--card);border:1px solid var(--rule);border-radius:7px;
+    padding:18px 20px;margin-bottom:16px;
+  }
+  section h2{
+    font-size:12px;text-transform:uppercase;letter-spacing:.08em;
+    margin:0 0 3px;font-weight:700;
+  }
+  section .sub{color:var(--ink-3);font-size:12px;margin:0 0 16px}
+
+  .tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1px;
+    background:var(--rule);border:1px solid var(--rule);border-radius:7px;overflow:hidden;margin-bottom:16px}
+  .tile{background:var(--card);padding:16px 18px}
+  .tile .k{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--ink-3);font-weight:600}
+  .tile .v{font-family:var(--mono);font-size:26px;font-weight:600;letter-spacing:-.02em;margin-top:5px}
+  .tile .n{font-size:11px;color:var(--ink-3);margin-top:2px}
+
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th{
+    text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.07em;
+    color:var(--ink-3);font-weight:700;padding:0 10px 7px 0;border-bottom:1px solid var(--rule);
+    white-space:nowrap;
+  }
+  td{padding:7px 10px 7px 0;border-bottom:1px solid var(--paper);vertical-align:top}
+  tr:last-child td{border-bottom:none}
+  td.num,th.num{text-align:right;font-family:var(--mono);font-variant-numeric:tabular-nums}
+  th.num{padding-right:0}
+  tfoot td{font-weight:700;border-top:1px solid var(--rule);border-bottom:none;padding-top:9px}
+
+  .pill{display:inline-block;padding:1px 7px;border-radius:10px;font-size:11px;font-weight:600}
+  .pill.ok{background:var(--accent-soft);color:var(--accent)}
+  .pill.warn{background:var(--warn-soft);color:var(--warn)}
+  .pill.bad{background:var(--bad-soft);color:var(--bad)}
+
+  .empty{color:var(--ink-3);font-size:13px;padding:14px 0}
+
+  /* funnel */
+  .funnel{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+  .step{border:1px solid var(--rule);border-radius:6px;padding:13px 15px}
+  .step .k{font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:var(--ink-3);font-weight:700}
+  .step .v{font-family:var(--mono);font-size:22px;font-weight:600;margin-top:4px}
+  .step .r{font-size:11px;color:var(--ink-2);margin-top:3px}
+  @media(max-width:620px){.funnel{grid-template-columns:1fr}}
+
+  /* notes */
+  .note{border-left:2px solid var(--accent);padding:2px 0 2px 12px;margin-bottom:11px}
+  .note:last-child{margin-bottom:0}
+  .note b{display:block;font-size:13px}
+  .note span{font-size:12px;color:var(--ink-2)}
+  .note.warn{border-color:var(--warn)}
+  .note.bad{border-color:var(--bad)}
+
+  svg{display:block;width:100%;height:auto;overflow:visible}
+  .legend{display:flex;flex-wrap:wrap;gap:14px;margin-top:12px;font-size:12px;color:var(--ink-2)}
+  .legend i{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:5px;vertical-align:-1px}
+
+  .foot{margin-top:26px;padding-top:14px;border-top:1px solid var(--rule);
+    font-size:11px;color:var(--ink-3)}
+
+  /* ---------- print ---------- */
+  @media print{
+    @page{size:A4;margin:14mm}
+    body{background:#fff;font-size:10.5pt}
+    #gate,aside,header.top .controls,.noprint{display:none!important}
+    .wrap{max-width:none;padding:0}
+    .layout{display:block}
+    section{break-inside:avoid;border:none;border-top:1px solid #ccc;border-radius:0;
+      padding:10px 0 0;margin-bottom:14px}
+    .tiles{border-color:#ccc;background:#ccc}
+    header.top{margin-bottom:14px}
+  }
+</style>
+</head>
+<body>
+
+<!-- ============ gate ============ -->
+<div id="gate">
+  <div class="box">
+    <h1>Partner reports</h1>
+    <p>Internal. Commission, clicks and conversion by partner.</p>
+    <div id="urlRow" style="display:none">
+      <label for="apiUrl">Deployment URL</label>
+      <input id="apiUrl" placeholder="https://script.google.com/macros/s/.../exec" autocomplete="off">
+    </div>
+    <label for="pw">Password</label>
+    <input id="pw" type="password" autocomplete="current-password">
+    <button class="primary" id="go">Open reports</button>
+    <div class="err" id="gateErr"></div>
+    <div style="margin-top:16px"><a href="#" id="resetUrl" style="font-size:12px">Change deployment URL</a></div>
+  </div>
+</div>
+
+<!-- ============ app ============ -->
+<div class="wrap" id="app" style="display:none">
+
+  <header class="top">
+    <div class="grow">
+      <div class="brand">yhangry &middot; partner reports</div>
+      <select id="partnerSel"><option>Loading partners…</option></select>
+    </div>
+    <div class="controls" style="display:flex;gap:8px">
+      <button id="printBtn">Download PDF</button>
+    </div>
+  </header>
+
+  <div class="layout">
+    <aside class="noprint">
+      <h3>Include</h3>
+      <div id="toggles"></div>
+    </aside>
+    <main id="report">
+      <div class="empty">Pick a partner to begin.</div>
+    </main>
+  </div>
+
+  <div class="foot" id="foot"></div>
+</div>
+
+<script>
+/* ------------------------------------------------------------------ config */
+const SECTIONS = [
+  ['summary',   'Summary'],
+  ['funnel',    'Conversion'],
+  ['notes',     'Observations'],
+  ['clicks',    'Clicks over time'],
+  ['traffic',   'Traffic by source'],
+  ['bookings',  'Bookings & commission'],
+  ['monthly',   'Monthly roundup'],
+  ['routes',    'Attribution'],
+];
+
+let API = localStorage.getItem('pr_api') || '';
+let TOKEN = sessionStorage.getItem('pr_token') || '';
+let DATA = null;
+
+/* ------------------------------------------------------------------ gate */
+const $ = id => document.getElementById(id);
+
+if (!API) $('urlRow').style.display = 'block';
+$('resetUrl').onclick = e => { e.preventDefault(); localStorage.removeItem('pr_api'); API=''; $('urlRow').style.display='block'; };
+
+$('go').onclick = async () => {
+  const err = $('gateErr'); err.textContent = '';
+  const url = API || $('apiUrl').value.trim();
+  const pw  = $('pw').value.trim();
+  if (!url) { err.textContent = 'Enter the deployment URL.'; return; }
+  if (!pw)  { err.textContent = 'Enter the password.'; return; }
+
+  $('go').textContent = 'Checking…';
+  try {
+    const r = await fetch(url + '?action=partners&token=' + encodeURIComponent(pw));
+    const j = await r.json();
+    if (j.error) { err.textContent = j.error === 'unauthorised' ? 'Password not recognised.' : j.error; $('go').textContent='Open reports'; return; }
+    API = url; TOKEN = pw;
+    localStorage.setItem('pr_api', url);
+    sessionStorage.setItem('pr_token', pw);
+    $('gate').style.display = 'none';
+    $('app').style.display = 'block';
+    buildToggles();
+    fillPartners(j.partners || []);
+  } catch (e) {
+    err.textContent = 'Could not reach the API. Check the URL.';
+    $('go').textContent = 'Open reports';
+  }
+};
+$('pw').addEventListener('keydown', e => { if (e.key === 'Enter') $('go').click(); });
+
+/* ------------------------------------------------------------------ helpers */
+const num = n => (Number(n)||0).toLocaleString('en-GB');
+const money = (n, c) => (c === 'USD' ? '$' : '£') +
+  (Number(n)||0).toLocaleString('en-GB',{minimumFractionDigits:2,maximumFractionDigits:2});
+const esc = s => String(s==null?'':s).replace(/[&<>"]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));
+const monthLabel = m => {
+  if (!m) return '';
+  const [y,mm] = m.split('-');
+  return ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][+mm-1] + ' ' + y;
+};
+const pct = (a,b) => b ? (100*a/b).toFixed(1) + '%' : '—';
+
+function buildToggles(){
+  $('toggles').innerHTML = SECTIONS.map(([id,label]) =>
+    `<label class="chk"><input type="checkbox" data-sec="${id}" checked> ${label}</label>`).join('');
+  $('toggles').addEventListener('change', e => {
+    const el = document.querySelector('[data-section="' + e.target.dataset.sec + '"]');
+    if (el) el.style.display = e.target.checked ? '' : 'none';
+  });
+}
+
+function fillPartners(list){
+  const sel = $('partnerSel');
+  sel.innerHTML = '<option value="">Select a partner…</option>' +
+    list.map(p => `<option>${esc(p.partner)}</option>`).join('');
+  sel.onchange = () => sel.value ? load(sel.value) : null;
+}
+
+/* ------------------------------------------------------------------ load */
+async function load(partner){
+  $('report').innerHTML = '<div class="empty">Loading ' + esc(partner) + '…</div>';
+  try{
+    const r = await fetch(API + '?partner=' + encodeURIComponent(partner) + '&token=' + encodeURIComponent(TOKEN));
+    DATA = await r.json();
+    if (DATA.error) { $('report').innerHTML = '<div class="empty">' + esc(DATA.error) + '</div>'; return; }
+    render(DATA);
+  }catch(e){
+    $('report').innerHTML = '<div class="empty">Could not load this partner. Try again.</div>';
+  }
+}
+
+/* ------------------------------------------------------------------ render */
+function render(d){
+  const B = d.bookings || [];
+  const CM = d.clicks_monthly || [];
+  const CC = d.clicks_campaign || [];
+  const TR = d.traffic || [];
+
+  const clicks = CM.reduce((s,r)=>s+ +r.clicks, 0);
+  const payable = B.filter(b => b.is_payable === 'true' || b.is_payable === true);
+  const cancelled = B.filter(b => /cancel/i.test(b.booking_status||''));
+  const refunded  = B.filter(b => +b.refunded_amount > 0);
+
+  const cur = (B[0] && B[0].currency) || 'GBP';
+  const commission = payable.reduce((s,b)=>s + (+b.commission_ex_vat||0), 0);
+  const gross = payable.reduce((s,b)=>s + (+b.order_value||0), 0);
+
+  const lastBooking = B.length ? B[0].meal_date : null;
+  const lastClick = CM.length ? CM[CM.length-1].month : null;
+
+  let html = '';
+
+  /* ---- summary ---- */
+  html += sec('summary','Summary', esc(d.partner), `
+    <div class="tiles">
+      ${tile('Unique clicks', num(clicks), CM.length ? monthLabel(CM[0].month)+' – '+monthLabel(CM[CM.length-1].month) : 'no clicks recorded')}
+      ${tile('Bookings', num(B.length), payable.length + ' payable')}
+      ${tile('Commission', money(commission,cur), 'excluding VAT')}
+      ${tile('Order value', money(gross,cur), 'payable bookings')}
+    </div>`);
+
+  /* ---- funnel ---- */
+  html += sec('funnel','Conversion','Clicks through to completed bookings', `
+    <div class="funnel">
+      <div class="step"><div class="k">Unique clicks</div><div class="v">${num(clicks)}</div><div class="r">tracked referrals</div></div>
+      <div class="step"><div class="k">Bookings</div><div class="v">${num(B.length)}</div><div class="r">${pct(B.length, clicks)} of clicks</div></div>
+      <div class="step"><div class="k">Payable</div><div class="v">${num(payable.length)}</div><div class="r">${pct(payable.length, B.length)} of bookings</div></div>
+    </div>`);
+
+  /* ---- notes ---- */
+  html += sec('notes','Observations','Generated from the figures on this page', notes({
+    clicks, bookings:B.length, payable:payable.length, cancelled:cancelled.length,
+    refunded:refunded.length, lastBooking, lastClick, commission, cur
+  }));
+
+  /* ---- clicks over time ---- */
+  html += sec('clicks','Clicks over time','Unique clicks by campaign, per month',
+    CM.length ? chart(CM, CC) : '<div class="empty">No clicks recorded.</div>');
+
+  /* ---- traffic ---- */
+  html += sec('traffic','Traffic by source','Where the clicks came from',
+    TR.length ? `
+    <table>
+      <thead><tr><th>Campaign</th><th>Source</th><th>Medium</th><th class="num">Clicks</th><th class="num">Share</th></tr></thead>
+      <tbody>${TR.map(t=>`<tr>
+        <td>${esc(t.utm_campaign)}</td><td>${esc(t.utm_source)}</td><td>${esc(t.utm_medium)}</td>
+        <td class="num">${num(t.clicks)}</td><td class="num">${pct(+t.clicks, clicks)}</td></tr>`).join('')}
+      </tbody>
+      <tfoot><tr><td colspan="3">Total</td><td class="num">${num(clicks)}</td><td class="num">100%</td></tr></tfoot>
+    </table>` : '<div class="empty">No clicks recorded.</div>');
+
+  /* ---- bookings ---- */
+  html += sec('bookings','Bookings &amp; commission',
+    'Commission is payable on the 25th of the month following the meal date. Figures exclude VAT.',
+    B.length ? `
+    <table>
+      <thead><tr><th>Order</th><th>Meal date</th><th>Status</th><th class="num">Order value</th><th class="num">Commission</th><th>Payout</th></tr></thead>
+      <tbody>${B.map(b=>`<tr>
+        <td>${esc(b.booking_reference || b.order_id)}</td>
+        <td>${esc(b.meal_date)}</td>
+        <td>${statusPill(b.booking_status)}</td>
+        <td class="num">${money(b.order_value, b.currency)}</td>
+        <td class="num">${(b.is_payable==='true'||b.is_payable===true) ? money(b.commission_ex_vat,b.currency) : '—'}</td>
+        <td>${payoutDate(b.meal_date)}</td></tr>`).join('')}
+      </tbody>
+      <tfoot><tr><td colspan="4">Total payable</td><td class="num">${money(commission,cur)}</td><td></td></tr></tfoot>
+    </table>` : '<div class="empty">No bookings yet.</div>');
+
+  /* ---- monthly ---- */
+  html += sec('monthly','Monthly roundup','Clicks and bookings side by side', monthly(CM, B));
+
+  /* ---- routes ---- */
+  html += sec('routes','Attribution','How each booking was matched to this partner', routes(B));
+
+  $('report').innerHTML = html;
+
+  document.querySelectorAll('#toggles input').forEach(cb=>{
+    const el = document.querySelector('[data-section="'+cb.dataset.sec+'"]');
+    if (el) el.style.display = cb.checked ? '' : 'none';
+  });
+
+  $('foot').textContent = 'Generated ' + new Date().toLocaleDateString('en-GB',
+    {day:'numeric',month:'long',year:'numeric'}) +
+    ' · Clicks are distinct tracked referrals, deduplicated by click ID.';
+}
+
+function sec(id,title,sub,body){
+  return `<section data-section="${id}"><h2>${title}</h2><p class="sub">${sub}</p>${body}</section>`;
+}
+function tile(k,v,n){ return `<div class="tile"><div class="k">${k}</div><div class="v">${v}</div><div class="n">${n}</div></div>`; }
+
+function statusPill(s){
+  s = s || '';
+  if (/^payable/i.test(s)) return `<span class="pill ok">${esc(s)}</span>`;
+  if (/cancel|refund/i.test(s)) return `<span class="pill bad">${esc(s)}</span>`;
+  return `<span class="pill warn">${esc(s)}</span>`;
+}
+
+function payoutDate(meal){
+  if (!meal) return '—';
+  const d = new Date(meal + 'T00:00:00');
+  if (isNaN(d)) return '—';
+  d.setMonth(d.getMonth()+1);
+  return '25 ' + d.toLocaleDateString('en-GB',{month:'short',year:'numeric'});
+}
+
+/* ---- observations ---- */
+function notes(x){
+  const out = [];
+  if (x.clicks > 200 && x.bookings === 0)
+    out.push(['bad','Traffic but no bookings',
+      num(x.clicks)+' clicks and nothing converted. Worth checking the landing page and whether the link carries the right tracking.']);
+  else if (x.clicks > 0 && x.bookings > 0 && (x.bookings/x.clicks) < 0.005)
+    out.push(['warn','Low conversion',
+      'Roughly '+pct(x.bookings,x.clicks)+' of clicks become bookings. Below what we normally see.']);
+
+  if (x.cancelled > 0)
+    out.push(['warn', x.cancelled + (x.cancelled===1?' cancelled booking':' cancelled bookings'),
+      'Excluded from commission. Included in the table for transparency.']);
+  if (x.refunded > 0)
+    out.push(['warn', x.refunded + (x.refunded===1?' partly refunded booking':' partly refunded bookings'),
+      'Commission is calculated on the amount kept, not the original order value.']);
+
+  if (x.lastClick){
+    const [y,m] = x.lastClick.split('-').map(Number);
+    const age = (new Date().getFullYear()-y)*12 + (new Date().getMonth()+1-m);
+    if (age >= 3) out.push(['bad','Traffic has stopped',
+      'Last click was '+monthLabel(x.lastClick)+'. The link may have been removed.']);
+  }
+  if (x.bookings === 0 && x.clicks === 0)
+    out.push(['bad','No activity recorded','No clicks and no bookings for this partner.']);
+
+  if (!out.length) out.push(['','Nothing flagged','Clicks, bookings and commission all look normal.']);
+
+  return out.map(([cls,t,s])=>`<div class="note ${cls}"><b>${esc(t)}</b><span>${esc(s)}</span></div>`).join('');
+}
+
+/* ---- monthly roundup ---- */
+function monthly(CM, B){
+  const map = {};
+  CM.forEach(r => map[r.month] = { m:r.month, clicks:+r.clicks, made:0, payable:0, comm:0, cur:'GBP' });
+  B.forEach(b => {
+    const k = b.month;
+    if (!map[k]) map[k] = { m:k, clicks:0, made:0, payable:0, comm:0, cur:b.currency };
+    map[k].made++;
+    map[k].cur = b.currency;
+    if (b.is_payable==='true'||b.is_payable===true){ map[k].payable++; map[k].comm += +b.commission_ex_vat||0; }
+  });
+  const rows = Object.values(map).sort((a,b)=>a.m<b.m?1:-1);
+  if (!rows.length) return '<div class="empty">Nothing to show.</div>';
+  return `<table>
+    <thead><tr><th>Month</th><th class="num">Clicks</th><th class="num">Bookings</th><th class="num">Payable</th><th class="num">Commission</th></tr></thead>
+    <tbody>${rows.map(r=>`<tr><td>${monthLabel(r.m)}</td>
+      <td class="num">${num(r.clicks)}</td><td class="num">${num(r.made)}</td>
+      <td class="num">${num(r.payable)}</td><td class="num">${r.comm?money(r.comm,r.cur):'—'}</td></tr>`).join('')}
+    </tbody></table>`;
+}
+
+/* ---- attribution ---- */
+function routes(B){
+  if (!B.length) return '<div class="empty">No bookings yet.</div>';
+  const c = {};
+  B.forEach(b => c[b.route||'unknown'] = (c[b.route||'unknown']||0)+1);
+  const names = { a_aid:'Tracking link (a_aid)', PAP:'Post Affiliate Pro', discount_code:'Discount code', mec_email:'Customer email' };
+  return `<table>
+    <thead><tr><th>Matched by</th><th class="num">Bookings</th><th class="num">Share</th></tr></thead>
+    <tbody>${Object.entries(c).sort((a,b)=>b[1]-a[1]).map(([k,v])=>
+      `<tr><td>${esc(names[k]||k)}</td><td class="num">${num(v)}</td><td class="num">${pct(v,B.length)}</td></tr>`).join('')}
+    </tbody></table>`;
+}
+
+/* ---- chart ---- */
+function chart(CM, CC){
+  const months = CM.map(r=>r.month);
+  const camps = [...new Set(CC.map(r=>r.utm_campaign))];
+  const colors = ['#0f6b6b','#b06a2c','#5a5f9e','#7a8c3f','#9e4a6b','#4a7a9e'];
+  const byCamp = {};
+  camps.forEach(c => byCamp[c] = months.map(m => {
+    const hit = CC.find(r=>r.month===m && r.utm_campaign===c);
+    return hit ? +hit.clicks : 0;
+  }));
+
+  const W=800,H=240,PL=44,PR=10,PT=12,PB=30;
+  const max = Math.max(1, ...Object.values(byCamp).flat());
+  const x = i => PL + (months.length<2 ? 0 : i*(W-PL-PR)/(months.length-1));
+  const y = v => PT + (H-PT-PB) * (1 - v/max);
+
+  const ticks = [0, Math.round(max/2), max].filter((v,i,a)=>a.indexOf(v)===i);
+  let g = ticks.map(t=>`<line x1="${PL}" x2="${W-PR}" y1="${y(t)}" y2="${y(t)}" stroke="#e6e9ed"/>
+    <text x="${PL-8}" y="${y(t)+4}" text-anchor="end" font-size="11" fill="#8b94a1" font-family="ui-monospace,monospace">${t}</text>`).join('');
+
+  const step = Math.max(1, Math.ceil(months.length/8));
+  g += months.map((m,i)=> i%step===0 ?
+    `<text x="${x(i)}" y="${H-10}" text-anchor="middle" font-size="10.5" fill="#8b94a1">${monthLabel(m).replace(' ',' ’').replace('’20','’')}</text>` : '').join('');
+
+  const lines = camps.map((c,ci)=>{
+    const pts = byCamp[c].map((v,i)=>`${x(i)},${y(v)}`).join(' ');
+    const dots = byCamp[c].map((v,i)=>`<circle cx="${x(i)}" cy="${y(v)}" r="2.5" fill="${colors[ci%6]}"/>`).join('');
+    return `<polyline points="${pts}" fill="none" stroke="${colors[ci%6]}" stroke-width="1.8" stroke-linejoin="round"/>${dots}`;
+  }).join('');
+
+  const legend = camps.map((c,ci)=>`<span><i style="background:${colors[ci%6]}"></i>${esc(c)}</span>`).join('');
+
+  return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Clicks by campaign per month">${g}${lines}</svg>
+    <div class="legend">${legend}</div>`;
+}
+
+/* ------------------------------------------------------------------ print */
+$('printBtn').onclick = () => window.print();
+</script>
+</body>
+</html>

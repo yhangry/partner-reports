@@ -156,15 +156,10 @@
   <div class="box">
     <h1>Partner reports</h1>
     <p>Internal. Commission, clicks and conversion by partner.</p>
-    <div id="urlRow" style="display:none">
-      <label for="apiUrl">Deployment URL</label>
-      <input id="apiUrl" placeholder="https://script.google.com/macros/s/.../exec" autocomplete="off">
-    </div>
     <label for="pw">Password</label>
     <input id="pw" type="password" autocomplete="current-password">
     <button class="primary" id="go">Open reports</button>
     <div class="err" id="gateErr"></div>
-    <div style="margin-top:16px"><a href="#" id="resetUrl" style="font-size:12px">Change deployment URL</a></div>
   </div>
 </div>
 
@@ -207,37 +202,31 @@ const SECTIONS = [
   ['routes',    'Attribution'],
 ];
 
-let API = localStorage.getItem('pr_api') || '';
+const API = 'https://script.google.com/macros/s/AKfycby_UKcGIoTDZsQJRVeXBktTveTgMIzFIyQglKr6819ZllinqbkvrVEwbnq4jwDB5jFMoA/exec';
 let TOKEN = sessionStorage.getItem('pr_token') || '';
 let DATA = null;
 
 /* ------------------------------------------------------------------ gate */
 const $ = id => document.getElementById(id);
 
-if (!API) $('urlRow').style.display = 'block';
-$('resetUrl').onclick = e => { e.preventDefault(); localStorage.removeItem('pr_api'); API=''; $('urlRow').style.display='block'; };
-
 $('go').onclick = async () => {
   const err = $('gateErr'); err.textContent = '';
-  const url = API || $('apiUrl').value.trim();
-  const pw  = $('pw').value.trim();
-  if (!url) { err.textContent = 'Enter the deployment URL.'; return; }
-  if (!pw)  { err.textContent = 'Enter the password.'; return; }
+  const pw = $('pw').value.trim();
+  if (!pw) { err.textContent = 'Enter the password.'; return; }
 
   $('go').textContent = 'Checking…';
   try {
-    const r = await fetch(url + '?action=partners&token=' + encodeURIComponent(pw));
+    const r = await fetch(API + '?action=partners&token=' + encodeURIComponent(pw));
     const j = await r.json();
     if (j.error) { err.textContent = j.error === 'unauthorised' ? 'Password not recognised.' : j.error; $('go').textContent='Open reports'; return; }
-    API = url; TOKEN = pw;
-    localStorage.setItem('pr_api', url);
+    TOKEN = pw;
     sessionStorage.setItem('pr_token', pw);
     $('gate').style.display = 'none';
     $('app').style.display = 'block';
     buildToggles();
     fillPartners(j.partners || []);
   } catch (e) {
-    err.textContent = 'Could not reach the API. Check the URL.';
+    err.textContent = 'Could not reach the data source. Try again in a moment.';
     $('go').textContent = 'Open reports';
   }
 };
